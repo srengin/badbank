@@ -6,8 +6,9 @@ function Alldata(){
     const {userLoggedIn, setUserLoggedIn} = useContext(LoginContext);
     const user = state.filter((item)=> item.isLoggedIn);
     
-
-    return( (userLoggedIn ?
+    const [data, setData] = React.useState('');    
+    /**
+     *  (userLoggedIn ?
         <div>
             <h1>All Data</h1>
             <div className="container-fluid">
@@ -37,7 +38,28 @@ function Alldata(){
                 </div>
             </div>
         </div> :
-        <h3>Please Login to access your account</h3>)
+     */
+
+    React.useEffect(() => {
+        
+        // fetch all accounts from API
+        fetch('/account/all')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                setData(JSON.stringify(data));                
+            });
+
+    }, []);
+
+    return (<>
+        <h5>All Data in Store:</h5>
+        <p>Hello world {data}</p>
+    
+
+   
+        <h3>Please Login to access your account Halloween Night</h3>)
+        </>
     );
 
 }

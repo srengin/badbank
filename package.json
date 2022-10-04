@@ -1,8 +1,7 @@
 {
   "name": "badbank",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "server/index.js",
   "scripts": {
     "start": "nodemon server/index.js",
     "dev": "webpack --mode development && node server/index.js",
@@ -12,20 +11,27 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@leecheuk/react-google-login": "^5.4.1",
+    "bcryptjs": "^2.4.3",
     "bootstrap": "^5.2.0-beta1",
     "cors": "^2.8.5",
+    "docker": "^1.0.0",
+    "docker-compose": "^0.23.17",
     "express": "^4.18.1",
+    "firebase": "^9.10.0",
+    "firebase-admin": "^11.0.1",
     "http-server": "^14.1.1",
     "inner": "^0.2.0",
+    "jsonwebtoken": "^8.5.1",
     "masonry-layout": "^4.2.2",
-    "mongodb": "^4.9.1",
-    "mongosh": "^1.5.4",
+    "mongodb": "^4.10.0",
+    "mongosh": "^0.0.1",
+    "nodemon": "^2.0.20",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-masonry-css": "^1.0.16",
     "react-router-dom": "^6.3.0",
-    "react-tooltip": "^4.2.21",
-    "use-immer": "^0.7.0"
+    "react-tooltip": "^4.2.21"
   },
   "devDependencies": {
     "@babel/core": "^7.18.2",
@@ -41,5 +47,14 @@
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.9.2",
     "webpack-merge": "^5.8.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/srengin/badbank.git"
+  },
+  "bugs": {
+    "url": "https://github.com/srengin/badbank/issues"
+  },
+  "homepage": "https://github.com/srengin/badbank#readme",
+  "description": ""
 }

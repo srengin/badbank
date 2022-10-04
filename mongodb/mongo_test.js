@@ -1,5 +1,7 @@
+const MongoClient = require('mongodb').MongoClient;
+const url = 'mongodb://localhost:27017';
 
-const { MongoClient } = require("mongodb");
+/**const { MongoClient } = require("mongodb");
 const url = 'mongodb://localhost:27017';
 const client = new MongoClient(url);
 
@@ -36,8 +38,8 @@ async function run() {
     }
   }
 run().catch(console.dir);
-
-/**MongoClient.connect(url, {useUnifiedTopology: true}, function(err, client){
+*/
+MongoClient.connect(url, {useUnifiedTopology: true}, function(err, client){
     console.log('Connected')
 
     // database Name
@@ -54,4 +56,12 @@ run().catch(console.dir);
     collection.insertOne(doc, {w:1}, function(err, result){
         console.log('Document insert');
     });
-});*/
+    var customers = db
+      .collection('customers')
+      .find()
+      .toArray(function(err,docs){
+        console.log('Collections: ', docs);
+        // clean up
+        client.close();
+    });
+});

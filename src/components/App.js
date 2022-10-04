@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import React, { useReducer, useState, useMemo } from 'react';
-import { useImmer, useImmerReducer} from 'use-immer';
 import Navbar from './navbar.js';
 import Homepage from '../pages/homepage.js';
 import Withdrawal from '../pages/withdrawal.js';
@@ -13,6 +12,24 @@ import Promotions from '../pages/promotion.js';
 import { UserContext, LoginContext, istate, reducer } from './context.js';
 import Masonry from 'react-masonry-css'
 import '../index.css';
+
+import { initializeApp } from "firebase/app";
+
+const firebaseConfig = {
+
+    apiKey: "AIzaSyCvqZeGAySesFpWWC-vDAarKWtcRjRCvjE",
+    authDomain: "badbank-cd36f.firebaseapp.com",
+    projectId: "badbank-cd36f",
+    storageBucket: "badbank-cd36f.appspot.com",
+    messagingSenderId: "1050167168889",
+    appId: "1:1050167168889:web:fca7f24814cf154d2ca9a8"
+  
+  };
+  
+  
+  // Initialize Firebase
+  
+  const app = initializeApp(firebaseConfig);
 
 
 

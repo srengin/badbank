@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import 'bootstrap';
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 
+
 import ReactDOM from 'react-dom'
 
 import { Router, Route, BrowserRouter, NavLink } from 'react-router'

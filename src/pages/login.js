@@ -1,14 +1,31 @@
 import React, { useState, useContext} from 'react';
+
 import { UserContext, Card, LoginContext } from '../components/context.js';
+import { useReducer } from 'react';
+import { signInWithEmailAndPassword , onAuthStateChanged, signOut}  from 'firebase/auth';
+import {auth} from '../../server/config';
 
 function Login(){
     const [email, setEmail]     = React.useState("");
     const [password, setPassword] = React.useState("");
+    const [showForm, setShowForm] = React.useState(true);
+
 
     const {state, dispatch} = React.useContext(UserContext);
     const {userLoggedIn, setUserLoggedIn} = React.useContext(LoginContext);
+    
+    const login= async ()=>{
+        try {
+            
+            const user = await signInWithEmailAndPassword(auth, email, password);
+            setShowForm(false);
+            console.log(user);
+            setShowForm(false);
+        }catch(error){
+            console.log(error.message);
+        }
 
-
+    }
     
 
     function validate(field, label){
@@ -19,6 +36,7 @@ function Login(){
         return true;
     }
 
+   
     function handleCreate(){
         event.preventDefault();
         console.log("email and password", email, password);
@@ -53,9 +71,10 @@ function Login(){
         dispatch(action);
         clearForm();
         setUserLoggedIn(false); //
-    }
+    };
 
-
+    
+    
     return(
         <Card
             bgcolor="success"
@@ -70,7 +89,8 @@ function Login(){
                     <input type="input" className="form-control" id="password" 
                     placeholder="Enter password" value={password} onChange = {e => setPassword(e.target.value)}/>
                     <br/>
-                    <button type="submit" className="btn btn-light" onClick={handleCreate}>Login</button>
+                    <button type="submit" className="btn btn-light" onClick={login}>Login</button>
+                   
                 </>):
                 (<>
                     <h5>Success. You are logged in.</h5>
