@@ -1,37 +1,28 @@
-import React, { useState, useContext, useReducer} from 'react';
-import { UserContext, Card, reducer } from '../components/context.js';
-import {auth, signInWithGoogle} from '../../server/config';
-import { createUserWithEmailAndPassword , onAuthStateChanged, signOut}  from 'firebase/auth';
+import React, { useState, useContext, useEffect, useReducer, useLayoutEffect} from 'react';
+import { UserContext, Card, reducer, auth, signInWithGoogle, callAuthRoute, LoginContext, provider} from '../components/context.js';
+import { createUserWithEmailAndPassword , onAuthStateChanged, signOut, signInWithPopup}  from 'firebase/auth';
 
 function CreateAccount(){
-    const [showForm, setShowForm]       = React.useState(true);
-    const [name, setName]       = React.useState("");
-    const [email, setEmail]     = React.useState("");
-    const [password, setPassword] = React.useState("");
-    const [user, setUser] = useState({});
+    const [showForm, setShowForm]       = useState(true);
+    const [firstName, setFirstName]     = useState("");
+    const [lastName, setLastName]       = useState("");
+    const [phone, setPhone]             = useState("");
+    const [email, setEmail]             = useState("");
+    const [password, setPassword]       = useState("");
+    
+    
+    const {userLoggedIn, setUserLoggedIn} = React.useContext(LoginContext);
 
     const { state, dispatch, show } = useContext(UserContext);
 
+    /*useLayoutEffect(()=>{
     onAuthStateChanged(auth, (currentUser)=>{
-        setUser(currentUser);
-    })
+        console.log("in UseEffect", currentUser);
+      setUserLoggedIn(currentUser? true : false);
+    });
+    }, []);
 
-    const register = async ()=>{
-        try {
-            handleCreate();
-            const user = await createUserWithEmailAndPassword(auth, email, password);
-            setShowForm(false);
-            console.log(user);
-        }catch(error){
-            console.log(error.message);
-        }
-
-    }
-
-    const logout = async()=>{
-        await signOut(auth);
-    };
-
+   */
     function validate(field, label){
         if (!field){
             alert(`${label} cannot be empty`)
@@ -50,64 +41,63 @@ function CreateAccount(){
 
     function handleCreate(){
         event.preventDefault();
-        console.log(name, email, password);
         
-        if (!validate(name, 'name')) return;
+        if (!validate(firstName, 'firstName')) return;
+        if (!validate(lastName, 'lastName')) return;
+        if (!validate(phone, 'phone')) return;
         if (!validate(email, 'email')) return;
         if (!validate(password, 'password')) return;
-        //const action = { type: 'ADD_USER', payload:{'name':name, 'email':email, 'password':password, 'balance':100, 'isAdmin':false, 'isLoggedIn': false, userTransactions: ['Account Created, balance: $100.00']} };
+        const action = { type: 'ADD_USER', payload:{'firstName':firstName, 'lastName':lastName, 'password':password, 'email':email, 'phone':phone,'balance':0, 'admin':false} };
         
+        
+        dispatch(action);
         setShowForm(false);
-        //dispatch(action)
-        function handle(){
-            console.log(name,email,password);
-            const url = `/account/create/${name}/${email}/${password}`;
-            (async () => {
-                var res  = await fetch(url);
-                var data = await res.json();    
-                console.log(data);        
-            })();
-            //props.setShow(false);
-          }    
-          handle();
     }
 
     function clearForm(){
-        setName('');
+        setFirstName('');
+        setLastName('');
+        setPhone('');
         setEmail('');
         setPassword('');
         setShowForm(true);
+        const action = { type: 'LOGOUT'};
+        dispatch(action);
+        setUserLoggedIn(false);
     }
-
-    console.log("Current User: ", auth.currentUser);
-    function callAuthroute(){
-        // call server with token
-        auth.currentUser.getIdToken()
-            .then((idToken)=>{
-                console.log('idToken', idToken);
+    
+    const signInWithGoogle2 = () => {
+        signInWithPopup(auth, provider).then((result)=>{
+            console.log("displayName", result.user.displayName);
             
-        (async ()=>{
-            let response = await fetch('/auth', {
-                method: "GET",
-                headers: {
-                    'Authorization': idToken
-                }
-            });
-            let text = await response.text();
-            console.log('response:', response);
+            const name = String(result.user.displayName).split(' ');
+            const action = { type: 'ADD_G_USER', payload:{'firstName': name[0], 'lastName':name[1], 'password':"N/A", 'email':result.user.email, 'balance':0, 'admin':false} };
+            dispatch(action);
+            setShowForm(false);
+        }).catch((error)=>{
+            console.log(error);
+        });
+        
+        
+      };
 
-        })();
-    }).catch(e=>console.log('e:', e));
-    }
     return(
         <Card
             bgcolor="success"
             header="Create Account"
             body={showForm ? (
                 <>
-                    Name<br/>
-                    <input type="input" className="form-control" id="name" 
-                    placeholder="Enter name" value={name} onChange = {e => {setName( e.target.value)}}/>
+                    First Name<br/>
+                    <input type="input" className="form-control" id="firstName" 
+                    placeholder="Enter first name" value={firstName} onChange = {e => {setFirstName( e.target.value)}}/>
+                    <br/>
+                    Last Name<br/>
+                    <input type="input" className="form-control" id="lastName" 
+                    placeholder="Enter last name" value={lastName} onChange = {e => {setLastName( e.target.value)}}/>
+                    <br/>
+                    Phone Number<br/>
+                    <input type="input" className="form-control" id="phone" 
+                    placeholder="Enter phone number" value={phone} onChange = {e => {setPhone( e.target.value)}}/>
                     <br/>
                     Email<br/>
                     <input type="input" className="form-control" id="email" 
@@ -117,13 +107,13 @@ function CreateAccount(){
                     <input type="input" className="form-control" id="password" 
                     placeholder="Enter password" value={password} onChange = {e => {setPassword(e.target.value)}}/>
                     <br/>
-                    <button type="submit" disabled={!name && !email && !password} className="btn btn-light" onClick={register}>Create Account</button>
-                    <br/>
-                    <button onClick={signInWithGoogle}>Sign In With Google</button>
+                    <button type="submit" disabled={!firstName && !lastName && phone && !email && !password} className="btn btn-light" onClick={handleCreate}>Create Account</button>
+                    <br/><br/>
+                    <button className="btn btn-light" onClick={signInWithGoogle2}>Sign In With Google</button>
                 </>):
                 (<>
-                    <h5> Success {user?.email} registered</h5>
-                    <button type="submit" className="btn btn-light" onClick={clearForm}>Add another account</button>
+                    {userLoggedIn ? <h5> {state?.email} you are registered and logged in</h5> : <h5>Submitting...</h5>}
+                    <button type="submit" className="btn btn-light" onClick={clearForm}>Logout and Create another account</button>
                 </>)
                 }
         />

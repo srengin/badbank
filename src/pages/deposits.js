@@ -3,7 +3,7 @@ import { UserContext, Card, LoginContext} from '../components/context.js';
 
 function Deposits(){
     const {state, dispatch} = useContext(UserContext);
-    const user = state.filter((item)=> item.isLoggedIn);
+   
     const [deposit, setDeposit] = useState("");
     const [showForm, setShowForm]       = React.useState(true);
     const {userLoggedIn, setUserLoggedIn} = useContext(LoginContext);
@@ -22,7 +22,7 @@ function Deposits(){
     function handleCreate(){
         event.preventDefault();
         if(!validate(deposit)) return;
-        const action = { type: 'DEPOSIT', payload: {user, deposit} };
+        const action = { type: 'DEPOSIT', payload: { deposit} };
         dispatch(action);
         setDeposit("");
         setShowForm(false);
@@ -35,7 +35,7 @@ function Deposits(){
         bgcolor="success"
         txtcolor="white"
         header="Deposits"
-        title= {`Hi ${user[0].name}\nYour Current Balance is: $${user[0].balance.toFixed(2)}`}
+        title= {`Hi ${state?.firstName}\nYour Current Balance is: $${state.balance}`}
         text={``}
         body={showForm ? (<form>Deposit<br/>
                     <input type="input" className="form-control" id="deposit" 

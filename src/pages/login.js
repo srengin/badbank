@@ -1,9 +1,10 @@
 import React, { useState, useContext} from 'react';
 
-import { UserContext, Card, LoginContext } from '../components/context.js';
+
+import { UserContext, Card, LoginContext, auth, provider } from '../components/context.js';
 import { useReducer } from 'react';
-import { signInWithEmailAndPassword , onAuthStateChanged, signOut}  from 'firebase/auth';
-import {auth} from '../../server/config';
+import { signInWithEmailAndPassword , signInWithPopup, onAuthStateChanged, signOut}  from 'firebase/auth';
+//import {auth} from '../../server/config';
 
 function Login(){
     const [email, setEmail]     = React.useState("");
@@ -16,17 +17,30 @@ function Login(){
     
     const login= async ()=>{
         try {
-            
+            if (!validate(email, 'email')) return;
+            if (!validate(password, 'password')) return;
             const user = await signInWithEmailAndPassword(auth, email, password);
             setShowForm(false);
+            setUserLoggedIn(true);
             console.log(user);
-            setShowForm(false);
         }catch(error){
             console.log(error.message);
         }
 
     }
     
+    const signInWithGoogle2 = () => {
+        signInWithPopup(auth, provider).then((result)=>{
+            console.log("displayName", result.user.displayName);
+            
+            const name = String(result.user.displayName).split(' ');
+            const action = { type: 'ADD_G_USER', payload:{'firstName': name[0], 'lastName':name[1], 'password':"N/A", 'email':result.user.email, 'balance':0, 'admin':false} };
+            dispatch(action);
+            setShowForm(false);
+        }).catch((error)=>{
+            console.log(error);
+        });
+      };
 
     function validate(field, label){
         if (!field){
@@ -39,23 +53,12 @@ function Login(){
    
     function handleCreate(){
         event.preventDefault();
-        console.log("email and password", email, password);
-        console.log("state: 2", state);
-        if (!validate(email, 'email')) return;
-        if (!validate(password, 'password')) return;
-        let user = state.filter((item)=> item.email.toLowerCase() === email.toLowerCase().trim());
-        console.log("user: ", user);
-        if(user.length === 0){
-            alert("Account not found, please click on Create an Account");
-            clearForm();
-            return;
-        }else if(user[0].password != password){
-            alert("Invalid password: please reenter.");
-            clearForm();
-            return;
-        }
+       
+        
+        
+        
         const action = { type: 'LOGIN', payload: {user} };
-        setUserLoggedIn(true);
+        
         dispatch(action);
     }
 
@@ -64,7 +67,7 @@ function Login(){
         setPassword('');
         
     }
-    console.log("state in login", state);
+   
     
     function resetAndLogout() {
         const action = {type: 'LOGOUT'};
@@ -90,6 +93,8 @@ function Login(){
                     placeholder="Enter password" value={password} onChange = {e => setPassword(e.target.value)}/>
                     <br/>
                     <button type="submit" className="btn btn-light" onClick={login}>Login</button>
+                    <br/><br/>
+                    <button className="btn btn-light" onClick={signInWithGoogle2}>LogIn With Google</button>
                    
                 </>):
                 (<>

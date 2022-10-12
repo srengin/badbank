@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import React, { useReducer, useState, useMemo } from 'react';
+import React, { useReducer, useState, useMemo, useEffect } from 'react';
 import Navbar from './navbar.js';
 import Homepage from '../pages/homepage.js';
 import Withdrawal from '../pages/withdrawal.js';
@@ -9,29 +9,10 @@ import Login from '../pages/login.js';
 import CreateAccount from '../pages/createaccount.js';
 import Founders from '../pages/founders.js';
 import Promotions from '../pages/promotion.js';
-import { UserContext, LoginContext, istate, reducer } from './context.js';
+import { UserContext, LoginContext, istate, reducer, auth } from './context.js';
 import Masonry from 'react-masonry-css'
 import '../index.css';
-
-import { initializeApp } from "firebase/app";
-
-const firebaseConfig = {
-
-    apiKey: "AIzaSyCvqZeGAySesFpWWC-vDAarKWtcRjRCvjE",
-    authDomain: "badbank-cd36f.firebaseapp.com",
-    projectId: "badbank-cd36f",
-    storageBucket: "badbank-cd36f.appspot.com",
-    messagingSenderId: "1050167168889",
-    appId: "1:1050167168889:web:fca7f24814cf154d2ca9a8"
-  
-  };
-  
-  
-  // Initialize Firebase
-  
-  const app = initializeApp(firebaseConfig);
-
-
+import {onAuthStateChanged}  from 'firebase/auth';
 
 function App() {
     const breakpointColumnsObj = {
@@ -43,6 +24,47 @@ function App() {
     const contextValue = useMemo(()=>({state, dispatch}), [state, dispatch]);
     console.log("in app contextValue", contextValue);
     const [userLoggedIn, setUserLoggedIn] = useState(false);
+
+    function callAuthRoute2(){
+        // call server with token
+        auth.currentUser.getIdToken()
+            .then((idToken)=>{
+                console.log('idToken******', idToken);
+       (async ()=>{
+            let response = await fetch('/auth', {
+                method: "GET",
+                headers: {
+                    'authorization': idToken
+                }
+            });
+          console.log("56");
+            let text = await response.json();
+            console.log('response:', text);
+            if(text.auth){
+              const email = text.email;
+              console.log(email);
+              const url = `/account/findOne/${email}`;
+                var res  = await fetch(url);
+                var data = await res.json();    
+                console.log("data weird", data); 
+                const{firstName, lastName, phone, balance, transact, admin} = data;
+              const action = { type: 'VERIFYUSER', payload: {firstName, lastName, phone, email, balance, transact, admin}};
+                dispatch(action);    
+            }})();
+      }).catch(e=>{
+        console.log('e:', e);
+      })
+      }
+
+      useEffect(()=>{
+        onAuthStateChanged(auth, (currentUser)=>{
+            console.log("in UseEffect", currentUser);
+          setUserLoggedIn(currentUser? true : false);
+          if(currentUser){
+          callAuthRoute2();
+          }
+        });
+        }, []);
 
     return (
             <BrowserRouter>

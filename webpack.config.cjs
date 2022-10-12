@@ -1,9 +1,16 @@
 const path = require('path');
+
 const HTMLWebpackPlugin = require('html-webpack-plugin');
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
+const Dotenv = require('dotenv-webpack');
+
 
 module.exports = {
     mode: 'development',
     entry: './src/index.js',
+    resolve: {
+        extensions: ['.ts', '...'],
+    },
 
     output: {
         path: path.join(__dirname, '/dist'),
@@ -16,7 +23,9 @@ module.exports = {
     plugins: [
         new HTMLWebpackPlugin({
             template: './src/index.html'
-        })
+        }),
+        new NodePolyfillPlugin(),
+        new Dotenv()
     ],
 
     module: {
