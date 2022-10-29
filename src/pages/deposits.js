@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { UserContext, Card, LoginContext} from '../components/context.js';
+import { UserContext, Card, LoginContext, auth} from '../components/context.js';
 
 function Deposits(){
     const {state, dispatch} = useContext(UserContext);
@@ -22,12 +22,49 @@ function Deposits(){
     function handleCreate(){
         event.preventDefault();
         if(!validate(deposit)) return;
-        const action = { type: 'DEPOSIT', payload: { deposit} };
-        dispatch(action);
+        var transact = `Deposit of ${deposit}.`
+        try{
+            const url = `https://ancient-coast-35441.herokuapp.com/account/updateAccount/${state.email}/${parseFloat(deposit)}/${transact}`;
+            // Add Authentication
+            
+            (async () => {
+                auth.currentUser.getIdToken()
+                    .then((idToken)=>{
+                    
+                    (async()=>{
+                        var res  = await fetch(url, {
+                            method: "GET",
+                            headers: {
+                            'authorization': idToken,
+                            'Content-Type':'application/json',
+                            'Access-Control-Allow-Origin':'*',
+                            'Access-Control-Allow-Methods':'POST,PATCH,OPTIONS'
+                             }
+                            });
+                      
+                      let newState= await res.json();   
+                      if (newState.auth===false){
+                        var action = { type: 'LOGOUT'};
+                        dispatch(action);
+                      }else{
+                      console.log("data in verify user", newState);  
+                      var action = { type: 'VERIFYUSER', payload: {newState}};
+                      dispatch(action);  
+                      setShowForm(false);
+                      }
+                    })();
+                    
+              })})();
+        //end Add Auth
+        
+                
+            }catch(err){
+              console.log("error2:", err);
+            }
         setDeposit("");
-        setShowForm(false);
+        
     }
-    console.log("state:", state);
+    console.log("state:in deposit", state);
 
     return(
         (userLoggedIn ? 
@@ -35,7 +72,7 @@ function Deposits(){
         bgcolor="success"
         txtcolor="white"
         header="Deposits"
-        title= {`Hi ${state?.firstName}\nYour Current Balance is: $${state.balance}`}
+        title= {`Hi ${state?.email}\nAccount Number: ${state.accountNum}\nYour Current Balance is: $${state.balance.toFixed(2)}`}
         text={``}
         body={showForm ? (<form>Deposit<br/>
                     <input type="input" className="form-control" id="deposit" 

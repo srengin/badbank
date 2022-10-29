@@ -1,12 +1,8 @@
-mongo:
-  image: mongo
-  ports:
-    - "27017:27017"
-  restart: always
-web:
-  build: .
-  ports:
-    - "3000:3000"
-  links:
-    - "mongo"
-  command: node index.js
+version: "3"
+services:
+  badbankserver:
+    build: .
+    ports:
+      - "3000:3000"
+      - "443:3000"
+    env_file:

@@ -73,11 +73,12 @@ export async function findOne(email){
     return user;
 };
 
-export async function updateAccount(email, amount){
+export async function updateAccount(email, amount, transact){
 
     const user = await User.findOneAndUpdate(
         {email},
-        { $inc: {balance:amount}},
+        { $inc: {balance:amount},
+          $push: {transact}},
         { returnDocument: 'after'}
     );
     return user;

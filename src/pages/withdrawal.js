@@ -1,16 +1,16 @@
 import React, { useContext, useState } from 'react';
-import { UserContext, Card, LoginContext} from '../components/context.js';
+import { UserContext, Card, LoginContext, auth} from '../components/context.js';
+
 
 function Withdrawal(){
     const {state, dispatch } = useContext(UserContext);
     const {userLoggedIn, setUserLoggedIn} = useContext(LoginContext);
-    const user = state.filter((item)=> item.isLoggedIn);
     const [withdrawal, setWithdrawal] = useState("");
     const [showForm, setShowForm]       = React.useState(true);
 
     function validate(withdrawal1, balance1) {
         console.log("withdrawal", withdrawal1);
-        console.log("user.balance", user.balance);
+        console.log("State.balance", state.balance);
         if (isNaN(withdrawal1)){
             alert("Please input a number for a valid withdrawal");
             return false;
@@ -18,7 +18,6 @@ function Withdrawal(){
             alert("Please enter a positive number for withdraw.");
             return false;
         }else if(parseFloat(withdrawal1) > balance1){
-            console.log("Hello why isn't it reading the alret");
             alert("Overdraft Prevention: withdrawal amount is greater than balance");
             return false;
         }
@@ -27,11 +26,45 @@ function Withdrawal(){
 
     function handleCreate(){
         event.preventDefault();
-        if(!validate(withdrawal, user[0].balance)) return;
-        const action = { type: 'WITHDRAWAL', payload: {user, withdrawal} };
-        dispatch(action);
+        if(!validate(withdrawal, state.balance)) return;
+        var transact = `Withdrawal of ${withdrawal}.`
+        try{
+            const url = `https://ancient-coast-35441.herokuapp.com/account/updateAccount/${state.email}/${parseFloat(withdrawal)*-1}/${transact}`;
+            let email = auth.currentUser.email;
+                (async () => {
+                    auth.currentUser.getIdToken()
+                        .then((idToken)=>{
+                        
+                        (async()=>{
+                            var res  = await fetch(url, {
+                                method: "GET",
+                                headers: {
+                                'authorization': idToken,
+                                'Content-Type':'application/json',
+                                'Access-Control-Allow-Origin':'*',
+                                'Access-Control-Allow-Methods':'POST,PATCH,OPTIONS'
+                                 }
+                                });
+                          
+                          let newState= await res.json();   
+                          if (newState.auth===false){
+                            var action = { type: 'LOGOUT'};
+                            dispatch(action);
+                          }else{
+                          console.log("data in verify user", newState);  
+                          var action = { type: 'VERIFYUSER', payload: {newState}};
+                          dispatch(action);  
+                          setShowForm(false);
+                          }
+                        })();
+                        
+                  })})();
+            }catch(err){
+              console.log("error2:", err);
+            }
+        
         setWithdrawal("");
-        setShowForm(false);
+        
     }
     console.log("state:", state);
 
@@ -41,7 +74,7 @@ function Withdrawal(){
         bgcolor="success"
         txtcolor="white"
         header="Withdrawals"
-        title= {`Hi ${user[0].name}\nYour Current Balance is: $${user[0].balance}`}
+        title= {`Hi ${state.name ? state.name : state.email}\nAccount Number: ${state.accountNum}\nYour Current Balance is: $${state.balance.toFixed(2)}`}
         text={``}
         body={ showForm ? (<form>Withdrawal<br/>
                     <input type="input" className="form-control" id="withdrawal" 

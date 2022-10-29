@@ -4,11 +4,9 @@ LABEL srengin <susan.engin@gmail.com>
 
 WORKDIR /app
 
-COPY index.js /app/index.js
-COPY package.json /app/package.json
-COPY dal.js /app/dal.js
-COPY admin.js /app/admin.js
-COPY serviceaccount.js /app/serviceaccount.js
-
-
+COPY package.json .
 RUN npm install
+
+COPY . ./
+
+CMD ["node", "index.js"]

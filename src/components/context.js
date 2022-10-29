@@ -1,15 +1,13 @@
-import React, { createContext, useReducer} from 'react';
+import React, { createContext, useReducer, useState} from 'react';
 import { initializeApp } from 'firebase/app';
 import {signInWithPopup, GoogleAuthProvider, getAuth} from 'firebase/auth';
 import { createUserWithEmailAndPassword , onAuthStateChanged, signOut}  from 'firebase/auth';
-//import * as dotenv from 'dotenv';
-//dotenv.config();
+
 import { resolvePath } from 'react-router-dom';
 
 
 
 
-console.log(process.env.REACT_APP_FIREBASE_CONFIG);
 
 // Initialize Firebase
 
@@ -31,6 +29,8 @@ export const signInWithGoogle = () => {
 
 export const UserContext = createContext(null);
 export const LoginContext = createContext(null);
+export const LoadingContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export const user = {
      
@@ -87,80 +87,3 @@ export function Card(props){
         </div>
         );
 }
-/*8888888888888888888888888********888888888888888888888888888888888888888888888888888888888888888888888
-export function callAuthRoute(){
-  // call server with token
-  auth.currentUser.getIdToken()
-      .then((idToken)=>{
-          console.log('idToken******', idToken);
-      
- (async ()=>{
-  console.log("55");
-      let response = await fetch('/auth', {
-          method: "GET",
-          headers: {
-              'authorization': idToken
-          }
-      });
-    console.log("56");
-      let text = await response.json();
-      console.log('response:', text);
-      if(text.auth){
-        const email = text.email;
-        console.log(email);
-      
-        const url = `/account/findOne/${email}`;
-        
-          var res  = await fetch(url);
-          var data = await res.json();    
-          console.log("data weird", data); 
-          const{firstName, lastName, phone, balance, transact, admin} = data;
-        const action = { type: 'VERIFYUSER', payload: {firstName, lastName, phone, email, balance, transact, admin}};
-          dispatch(action);
-                
-      }})();
- 
-}).catch(e=>{
-  console.log('e:', e);
-  
-})
-}
-
-
-function verifyUser(){
-  (async()=>{
-    state= await new Promise((resolve,reject)=>{
-      auth.currentUser.getIdToken()
-      .then((idToken)=>{      
-        (async ()=>{
-                  let response = await fetch('/auth', {
-                  method: "GET",
-                  headers: {
-                      'authorization': idToken
-                  }
-              });
-              resolve(await response.json());
-            })();
-          }).then((result)=>{
-            (async()=>{
-            if(result?.auth){
-              const email = result.email;
-              const url = `/account/findOne/${email}`;
-      
-              var res  = await fetch(url);
-              var data = await res.json();    
-              console.log("data weird", data); 
-              const{firstName, lastName, phone, balance, transact, admin} = data;
-                return({firstName, lastName, phone, email, balance, transact});       
-            }else{
-              reject()
-        }})();})
-        
-        
-        })
-        
-        
-        
-        })();
-}
-*/

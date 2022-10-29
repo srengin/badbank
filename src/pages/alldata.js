@@ -1,67 +1,85 @@
 import React, { useState, useContext } from 'react';
-import { UserContext, LoginContext, Card } from '../components/context.js';
+import { UserContext, LoginContext, Card, auth } from '../components/context.js';
 
 function Alldata(){
-    const { state, show } = useContext(UserContext);
+    const { state, dispactch} = useContext(UserContext);
     const {userLoggedIn, setUserLoggedIn} = useContext(LoginContext);
-    const user = state.filter((item)=> item.isLoggedIn);
+    const [data, setData] = React.useState('');   
     
-    const [data, setData] = React.useState('');    
-    /**
-     *  (userLoggedIn ?
+    React.useEffect(() => {
+        if (state.admin){
+        // fetch all accounts from API
+       
+            
+// Authentication       
+        const url = `https://ancient-coast-35441.herokuapp.com/account/all`;
+            (async () => {
+                auth.currentUser.getIdToken()
+                    .then((idToken)=>{
+                    
+                    (async()=>{
+                        var res  = await fetch(url, {
+                            method: "GET",
+                            headers: {
+                            'authorization': idToken,
+                            'Content-Type':'application/json',
+                            'Access-Control-Allow-Origin':'*',
+                            'Access-Control-Allow-Methods':'POST,PATCH,OPTIONS'
+                             }
+                            }).then(response => response.json())
+                            .then(data => {
+                        console.log("raw all data", data);
+                        setData(data);                
+                        });;
+                      
+                      
+                    })();
+                    
+              })})();
+              // end of Authentication
+    }}, []);
+
+
+
+    
+   return (userLoggedIn ?
         <div>
             <h1>All Data</h1>
             <div className="container-fluid">
                 <div className="row">
           
-            {user[0].isAdmin && state.map((user) => 
+           
+            {!state.admin && <Card className="col-4"
+                    bgcolor="success"
+                    txtcolor="white"
+                    header={`${state?.email}\nAccount Number: ${state.accountNum}\nYour Current Balance is: $${state.balance}`}
+                    title= {`Current Balance: ${state.balance.toFixed(2)}`}
+                    text="Transactions: "
+                    body={state.transact.slice(0).reverse().map((transaction)=><li key={transaction}>{transaction}</li>)}
+                >
+                </Card>}
+
+                {data && data.map((user) => 
                 <Card className="col-4"
                     bgcolor="success"
                     txtcolor="white"
-                    header={user.name}
+                    header={`${user.email}\nAccount Number: ${user.accountNum}`}
                     title= {`Current Balance: ${user.balance.toFixed(2)}`}
                     text="Transactions: "
-                    body={user.userTransactions.map((transaction)=><p>{transaction}</p>)}
+                    body={user.transact.slice(0).reverse().map((transaction)=><li >{transaction}</li>)}
                 >
                 </Card>
                 )} 
-            {!user[0].isAdmin && <Card className="col-4"
-                    bgcolor="success"
-                    txtcolor="white"
-                    header={user[0].name}
-                    title= {`Current Balance: ${user[0].balance.toFixed(2)}`}
-                    text="Transactions: "
-                    body={user[0].userTransactions.map((transaction)=><p>{transaction}</p>)}
-                >
-                </Card>}
+               
              
                 </div>
             </div>
-        </div> :
-     */
-
-    React.useEffect(() => {
-        
-        // fetch all accounts from API
-        fetch('/account/all')
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                setData(JSON.stringify(data));                
-            });
-
-    }, []);
-
-    return (<>
-        <h5>All Data in Store:</h5>
-        <p>Hello world {data}</p>
+        </div> : (<>
+        <h3>Please Login to access your account</h3>
+        </>)
     
+   );
+        }
 
-   
-        <h3>Please Login to access your account Halloween Night</h3>)
-        </>
-    );
-
-}
 
 export default Alldata;

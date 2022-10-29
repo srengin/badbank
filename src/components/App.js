@@ -9,67 +9,92 @@ import Login from '../pages/login.js';
 import CreateAccount from '../pages/createaccount.js';
 import Founders from '../pages/founders.js';
 import Promotions from '../pages/promotion.js';
-import { UserContext, LoginContext, istate, reducer, auth } from './context.js';
+import { UserContext, LoginContext, user, reducer, auth, LoadingContext, AuthContext } from './context.js';
 import Masonry from 'react-masonry-css'
 import '../index.css';
 import {onAuthStateChanged}  from 'firebase/auth';
 
+
+
+
+
+
 function App() {
     const breakpointColumnsObj = {
         default: 1,
-        500: 1
-      };
-    const [state, dispatch] = useReducer(reducer, istate.users);  
+        500: 1};
+    const [state, dispatch] = useReducer(reducer, user);  
     console.log("in app state", state);
     const contextValue = useMemo(()=>({state, dispatch}), [state, dispatch]);
     console.log("in app contextValue", contextValue);
+    
     const [userLoggedIn, setUserLoggedIn] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [isauth, setIsauth] = useState(false);
+
+   
 
     function callAuthRoute2(){
-        // call server with token
-        auth.currentUser.getIdToken()
-            .then((idToken)=>{
-                console.log('idToken******', idToken);
-       (async ()=>{
-            let response = await fetch('/auth', {
-                method: "GET",
-                headers: {
-                    'authorization': idToken
-                }
-            });
-          console.log("56");
-            let text = await response.json();
-            console.log('response:', text);
-            if(text.auth){
-              const email = text.email;
-              console.log(email);
-              const url = `/account/findOne/${email}`;
-                var res  = await fetch(url);
-                var data = await res.json();    
-                console.log("data weird", data); 
-                const{firstName, lastName, phone, balance, transact, admin} = data;
-              const action = { type: 'VERIFYUSER', payload: {firstName, lastName, phone, email, balance, transact, admin}};
-                dispatch(action);    
-            }})();
-      }).catch(e=>{
-        console.log('e:', e);
-      })
+        let email = auth.currentUser.email;
+        
+        const url = `https://ancient-coast-35441.herokuapp.com/account/findOne/${email}`;
+            (async () => {
+                auth.currentUser.getIdToken()
+                    .then((idToken)=>{
+                    
+                    (async()=>{
+                        var res  = await fetch(url, {
+                            method: "GET",
+                            headers: {
+                            'authorization': idToken,
+                            'Content-Type':'application/json',
+                            'Access-Control-Allow-Origin':'*',
+                            
+                             }
+                            });
+                      
+                      let newState= await res.json();   
+                      if (!res.ok || newState.auth===false){
+                        var action = { type: 'LOGOUT'};
+                        dispatch(action);
+                      }else{
+                    
+                      console.log("data in verify user", newState);  
+                      var action = { type: 'VERIFYUSER', payload: {newState}};
+                      dispatch(action);                
+                       
+                      }
+                    })();
+                    
+              })})();
+        console.log("The state in app.js", state);
+        console.log("email: ", state.email);
       }
 
       useEffect(()=>{
         onAuthStateChanged(auth, (currentUser)=>{
-            console.log("in UseEffect", currentUser);
-          setUserLoggedIn(currentUser? true : false);
           if(currentUser){
           callAuthRoute2();
           }
         });
         }, []);
-
+    
+      
+    useEffect(()=>{
+            if(state.email){
+                setUserLoggedIn(true);
+            }else{
+                setUserLoggedIn(false);
+            }
+            }, [state.email]);
+        
     return (
             <BrowserRouter>
                 <UserContext.Provider value={contextValue} >
                 <LoginContext.Provider value={{userLoggedIn, setUserLoggedIn}} >
+                <LoadingContext.Provider value={{loading, setLoading}} >
+                <AuthContext.Provider value={{isauth, setIsauth}} >
+
                 <Navbar />
                 <div className="container-fluid">
                     <div className="row no-gutters align-items-stretch">
@@ -77,6 +102,7 @@ function App() {
                             <Masonry  breakpointCols={breakpointColumnsObj} className="my-masonry-grid container" columnClassName="my-masonry-grid_column">
                         
                                 <Routes>
+                                    <Route path='/index.html' element={<><Homepage /> <Promotions /></>} />
                                     <Route path='/' element={<><Homepage /> <Promotions /></>} />
                                     <Route path='/login' element={<Login />} />
                                     <Route path='/createaccount' element={<CreateAccount />} />
@@ -98,6 +124,9 @@ function App() {
                         <span className="text-muted"> copyright and contact information here</span>
                     </div>
                 </div>
+                
+                </AuthContext.Provider>
+                </LoadingContext.Provider>
                 </LoginContext.Provider>    
                 </UserContext.Provider>
             </BrowserRouter>

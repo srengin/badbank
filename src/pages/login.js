@@ -21,7 +21,6 @@ function Login(){
             if (!validate(password, 'password')) return;
             const user = await signInWithEmailAndPassword(auth, email, password);
             setShowForm(false);
-            setUserLoggedIn(true);
             console.log(user);
         }catch(error){
             console.log(error.message);
@@ -32,15 +31,43 @@ function Login(){
     const signInWithGoogle2 = () => {
         signInWithPopup(auth, provider).then((result)=>{
             console.log("displayName", result.user.displayName);
+            console.log("result", result);
+            var admin = false;
+            var transact = "Account Created."
+            var phone = "na";
+            var fname = "na";
+            var lname = "na";
             
             const name = String(result.user.displayName).split(' ');
-            const action = { type: 'ADD_G_USER', payload:{'firstName': name[0], 'lastName':name[1], 'password':"N/A", 'email':result.user.email, 'balance':0, 'admin':false} };
-            dispatch(action);
-            setShowForm(false);
+            if (name.length>1){
+                fname = name[0];
+                lname = name[1];
+            }else if(name.length ==1){
+                fname = name[0];
+            }
+            const url = `https://ancient-coast-35441.herokuapp.com/create/${fname}/${lname}/${phone}/${result.user.email}/${admin}/${transact}`;
+            try{
+                (async ()=>{
+                var res  = await fetch(url);
+                var newState = await res.json(); 
+    
+            if (!newState.error){
+                console.log("data", newState); 
+                const action = { type: 'VERIFYUSER', payload: {newState}};
+                dispatch(action); 
+            }
+                setShowForm(false);
+
+            })();
+        }catch(err){
+            console.log(err);
+            setResponse("There was an Error")};         
+            
         }).catch((error)=>{
             console.log(error);
-        });
-      };
+            setResponse("There was an Error signing up.")});
+        };
+        
 
     function validate(field, label){
         if (!field){
@@ -51,16 +78,7 @@ function Login(){
     }
 
    
-    function handleCreate(){
-        event.preventDefault();
-       
-        
-        
-        
-        const action = { type: 'LOGIN', payload: {user} };
-        
-        dispatch(action);
-    }
+   
 
     function clearForm(){
         setEmail('');
@@ -86,7 +104,7 @@ function Login(){
                 <>
                     Email<br/>
                     <input type="input" className="form-control" id="email" 
-                    placeholder="Enter email" value={email} onChange = {e => setEmail(e.target.value)}/>
+                    placeholder="Enter email" value={email} onChange = {e => setEmail(e.target.value.toLowerCase())}/>
                     <br/>
                     Password<br/>
                     <input type="input" className="form-control" id="password" 

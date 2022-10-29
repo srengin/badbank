@@ -2,6 +2,12 @@ import React, { useState, useContext, useEffect, useReducer, useLayoutEffect} fr
 import { UserContext, Card, reducer, auth, signInWithGoogle, callAuthRoute, LoginContext, provider} from '../components/context.js';
 import { createUserWithEmailAndPassword , onAuthStateChanged, signOut, signInWithPopup}  from 'firebase/auth';
 
+
+
+
+
+
+
 function CreateAccount(){
     const [showForm, setShowForm]       = useState(true);
     const [firstName, setFirstName]     = useState("");
@@ -9,20 +15,14 @@ function CreateAccount(){
     const [phone, setPhone]             = useState("");
     const [email, setEmail]             = useState("");
     const [password, setPassword]       = useState("");
+    const [response, setResponse]       = useState("Submitting...");
     
     
     const {userLoggedIn, setUserLoggedIn} = React.useContext(LoginContext);
 
-    const { state, dispatch, show } = useContext(UserContext);
+    const { state, dispatch } = useContext(UserContext);
 
-    /*useLayoutEffect(()=>{
-    onAuthStateChanged(auth, (currentUser)=>{
-        console.log("in UseEffect", currentUser);
-      setUserLoggedIn(currentUser? true : false);
-    });
-    }, []);
-
-   */
+  
     function validate(field, label){
         if (!field){
             alert(`${label} cannot be empty`)
@@ -39,6 +39,11 @@ function CreateAccount(){
         return true;
     }
 
+    useEffect(()=>{
+        setShowForm(!userLoggedIn);
+        }, [userLoggedIn]);
+    
+
     function handleCreate(){
         event.preventDefault();
         
@@ -47,10 +52,34 @@ function CreateAccount(){
         if (!validate(phone, 'phone')) return;
         if (!validate(email, 'email')) return;
         if (!validate(password, 'password')) return;
-        const action = { type: 'ADD_USER', payload:{'firstName':firstName, 'lastName':lastName, 'password':password, 'email':email, 'phone':phone,'balance':0, 'admin':false} };
-        
-        
-        dispatch(action);
+        var transact = ["Account Created, balance: $0.00"];
+        var admin=false;
+
+        try{ (async ()=>{  
+            let error = "";
+            const authUser = await createUserWithEmailAndPassword(auth, email, password).catch((err)=>{
+                setResponse("There is already an account associated with this email, please login.")});
+                console.log("authUser", authUser);
+                if(authUser){
+                const url = `https://ancient-coast-35441.herokuapp.com/create/${firstName}/${lastName}/${phone}/${email}/${admin}/${transact}`;
+                    var res  = await fetch(url);
+                    var newState = await res.json();    
+                    console.log("data", newState); 
+                    if(res.ok){
+                    const action = { type: 'VERIFYUSER', payload: {newState}};
+                    dispatch(action); 
+                    }else{
+                        const action = {type: 'LOGOUT'};
+                        dispatch(action);
+                        setUserLoggedIn(false); 
+                        setResponse("Unable to make an account, contact administrator")
+                    }
+                }       
+                })();
+            }catch(err){
+              console.log("error creating account:", err);
+            }
+            
         setShowForm(false);
     }
 
@@ -64,23 +93,51 @@ function CreateAccount(){
         const action = { type: 'LOGOUT'};
         dispatch(action);
         setUserLoggedIn(false);
+        setResponse("Submitting...");
     }
     
     const signInWithGoogle2 = () => {
         signInWithPopup(auth, provider).then((result)=>{
             console.log("displayName", result.user.displayName);
+            console.log("result", result);
+            var admin = false;
+            var transact = "Account Created."
+            var phone = "na";
+            var fname = "na";
+            var lname = "na";
             
             const name = String(result.user.displayName).split(' ');
-            const action = { type: 'ADD_G_USER', payload:{'firstName': name[0], 'lastName':name[1], 'password':"N/A", 'email':result.user.email, 'balance':0, 'admin':false} };
-            dispatch(action);
-            setShowForm(false);
+            if (name.length>1){
+                fname = name[0];
+                lname = name[1];
+            }else if(name.length ==1){
+                fname = name[0];
+            }
+            const url = `https://ancient-coast-35441.herokuapp.com/create/${fname}/${lname}/${phone}/${result.user.email}/${admin}/${transact}`;
+            try{
+                (async ()=>{
+                var res  = await fetch(url);
+                var newState = await res.json(); 
+    
+            if (!newState.error){
+                console.log("data", newState); 
+                const action = { type: 'VERIFYUSER', payload: {newState}};
+                dispatch(action); 
+            }
+                setShowForm(false);
+
+            })();
+        }catch(err){
+            console.log(err);
+            setResponse("There was an Error")};         
+            
         }).catch((error)=>{
             console.log(error);
-        });
+            setResponse("There was an Error signing up.")});
+        };
         
         
-      };
-
+  
     return(
         <Card
             bgcolor="success"
@@ -101,7 +158,7 @@ function CreateAccount(){
                     <br/>
                     Email<br/>
                     <input type="input" className="form-control" id="email" 
-                    placeholder="Enter email" value={email} onChange = {e => {setEmail(e.target.value)}}/>
+                    placeholder="Enter email" value={email} onChange = {e => {setEmail(e.target.value.toLowerCase())}}/>
                     <br/>
                     Password<br/>
                     <input type="input" className="form-control" id="password" 
@@ -112,8 +169,9 @@ function CreateAccount(){
                     <button className="btn btn-light" onClick={signInWithGoogle2}>Sign In With Google</button>
                 </>):
                 (<>
-                    {userLoggedIn ? <h5> {state?.email} you are registered and logged in</h5> : <h5>Submitting...</h5>}
-                    <button type="submit" className="btn btn-light" onClick={clearForm}>Logout and Create another account</button>
+                    
+                    {userLoggedIn ? <h5> {state.email} your account number is {state.accountNum}</h5> : <h5>{response} </h5>}
+                    <button type="submit" className="btn btn-light" onClick={clearForm}>Create another account</button>
                 </>)
                 }
         />

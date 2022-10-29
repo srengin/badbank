@@ -1,0 +1,8 @@
+version: "3"
+services:
+  badbankserver:
+  volumes:
+    - ./:/app
+    - /app/node_modules
+  environment:
+    - NODE_ENV=development
